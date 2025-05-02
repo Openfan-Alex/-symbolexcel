@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式元素周期表</title>
+    <style>
+        :root {
+            --alkali-metal: #FF9D9D;
+            --alkaline-earth: #FFDEAD;
+            --transition-metal: #FFC0C0;
+            --post-transition: #CCCCCC;
+            --metalloid: #CCFF99;
+            --nonmetal: #99FF99;
+            --halogen: #99FFFF;
+            --noble-gas: #C0C0FF;
+            --lanthanide: #FFBFFF;
+            --actinide: #FF99CC;
+            --unknown: #E0E0E0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .search-container {
+            margin: 20px auto;
+            max-width: 500px;
+        }
+
+        #search {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            grid-gap: 5px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .periodic-table {
+                grid-template-columns: repeat(9, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .periodic-table {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        .element {
+            position: relative;
+            height: 80px;
+            background-color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 5px;
+        }
+
+        .element:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .element .number {
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .element .symbol {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 0 auto;
+        }
+
+        .element .name {
+            font-size: 10px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .element .mass {
+            font-size: 10px;
+            text-align: right;
+        }
+
+        /* 元素类别颜色 */
+        .alkali-metal { background-color: var(--alkali-metal); }
+        .alkaline-earth { background-color: var(--alkaline-earth); }
+        .transition-metal { background-color: var(--transition-metal); }
+        .post-transition { background-color: var(--post-transition); }
+        .metalloid { background-color: var(--metalloid); }
+        .nonmetal { background-color: var(--nonmetal); }
+        .halogen { background-color: var(--halogen); }
+        .noble-gas { background-color: var(--noble-gas); }
+        .lanthanide { background-color: var(--lanthanide); }
+        .actinide { background-color: var(--actinide); }
+        .unknown { background-color: var(--unknown); }
+
+        /* 详细信息模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .element-detail {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .element-header {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .element-symbol-large {
+            font-size: 80px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .element-name-large {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .element-properties {
+            flex: 2;
+            min-width: 300px;
+        }
+
+        .property-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .property-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .property-table th, .property-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .property-table th {
+            background-color: #6e8efb;
+            color: white;
+        }
+
+        .element-description {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            line-height: 1.8;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #666;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .element-detail {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 15px;
+            }
+            
+            .element-symbol-large {
+                font-size: 60px;
+            }
+            
+            .property-table th, .property-table td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+        }
+
+        /* 高亮搜索匹配的元素 */
+        .highlight {
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 10px 5px rgba(255, 215, 0, 0.7);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>交互式元素周期表</h1>
+            <p>点击元素查看详细信息</p>
+        </header>
+
+        <div class="search-container">
+            <input type="text" id="search" placeholder="搜索元素名称、符号或原子序数..." autocomplete="off">
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><div class="legend-color alkali-metal"></div>碱金属</div>
+            <div class="legend-item"><div class="legend-color alkaline-earth"></div>碱土金属</div>
+            <div class="legend-item"><div class="legend-color transition-metal"></div>过渡金属</div>
+            <div class="legend-item"><div class="legend-color post-transition"></div>后过渡金属</div>
+            <div class="legend-item"><div class="legend-color metalloid"></div>类金属</div>
+            <div class="legend-item"><div class="legend-color nonmetal"></div>非金属</div>
+            <div class="legend-item"><div class="legend-color halogen"></div>卤素</div>
+            <div class="legend-item"><div class="legend-color noble-gas"></div>稀有气体</div>
+            <div class="legend-item"><div class="legend-color lanthanide"></div>镧系元素</div>
+            <div class="legend-item"><div class="legend-color actinide"></div>锕系元素</div>
+        </div>
+
+        <div class="periodic-table" id="periodicTable">
+            <!-- 元素将通过JavaScript动态生成 -->
+        </div>
+
+        <div class="footer">
+            <p>© 2025 交互式元素周期表 | 数据来源: 国际纯粹与应用化学联合会 (IUPAC)</p>
+        </div>
+    </div>
+
+    <!-- 元素详情模态框 -->
+    <div id="elementModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="element-detail" id="elementDetail">
+                <!-- 元素详情将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 元素数据
+        const elements = [
+    // 第1周期
+    { number: 1, symbol: "H", name: "氢", mass: 1.008, category: "nonmetal", 
+      discovered: "1766", discoverer: "Henry Cavendish", 
+      electron_config: "1s¹", phase: "气体", density: "0.00008988 g/cm³", 
+      melt: "-259.16°C", boil: "-252.87°C", 
+      description: "宇宙中最丰富的元素，水和有机化合物的主要成分。" },
+    
+    { number: 2, symbol: "He", name: "氦", mass: 4.0026, category: "noble-gas", 
+      discovered: "1868", discoverer: "Pierre Janssen", 
+      electron_config: "1s²", phase: "气体", density: "0.0001785 g/cm³", 
+      melt: "-272.20°C", boil: "-268.93°C", 
+      description: "惰性气体，用于低温技术和气球。" },
+
+    // 第2周期
+    { number: 3, symbol: "Li", name: "锂", mass: 6.94, category: "alkali-metal", 
+      discovered: "1817", discoverer: "Johan August Arfwedson", 
+      electron_config: "[He] 2s¹", phase: "固体", density: "0.534 g/cm³", 
+      melt: "180.54°C", boil: "1342°C", 
+      description: "最轻的金属，用于电池和合金。" },
+    
+    { number: 4, symbol: "Be", name: "铍", mass: 9.0122, category: "alkaline-earth", 
+      discovered: "1798", discoverer: "Louis Nicolas Vauquelin", 
+      electron_config: "[He] 2s²", phase: "固体", density: "1.85 g/cm³", 
+      melt: "1287°C", boil: "2471°C", 
+      description: "高刚性轻金属，用于航空航天材料。" },
+    
+    { number: 5, symbol: "B", name: "硼", mass: 10.81, category: "metalloid", 
+      discovered: "1808", discoverer: "Joseph Louis Gay-Lussac", 
+      electron_config: "[He] 2s² 2p¹", phase: "固体", density: "2.34 g/cm³", 
+      melt: "2076°C", boil: "3927°C", 
+      description: "类金属，用于玻璃纤维和半导体。" },
+    
+    { number: 6, symbol: "C", name: "碳", mass: 12.011, category: "nonmetal", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[He] 2s² 2p²", phase: "固体", density: "2.267 g/cm³", 
+      melt: "3500°C", boil: "4827°C", 
+      description: "生命的基础元素，存在多种同素异形体。" },
+    
+    { number: 7, symbol: "N", name: "氮", mass: 14.007, category: "nonmetal", 
+      discovered: "1772", discoverer: "Daniel Rutherford", 
+      electron_config: "[He] 2s² 2p³", phase: "气体", density: "0.0012506 g/cm³", 
+      melt: "-210.00°C", boil: "-195.79°C", 
+      description: "大气主要成分，用于肥料和制冷剂。" },
+    
+    { number: 8, symbol: "O", name: "氧", mass: 15.999, category: "nonmetal", 
+      discovered: "1774", discoverer: "Joseph Priestley", 
+      electron_config: "[He] 2s² 2p⁴", phase: "气体", density: "0.001429 g/cm³", 
+      melt: "-218.79°C", boil: "-182.95°C", 
+      description: "支持燃烧和呼吸的关键元素。" },
+    
+    { number: 9, symbol: "F", name: "氟", mass: 18.998, category: "halogen", 
+      discovered: "1886", discoverer: "Henri Moissan", 
+      electron_config: "[He] 2s² 2p⁵", phase: "气体", density: "0.001696 g/cm³", 
+      melt: "-219.67°C", boil: "-188.11°C", 
+      description: "最活泼的非金属，用于牙膏和制冷剂。" },
+    
+    { number: 10, symbol: "Ne", name: "氖", mass: 20.180, category: "noble-gas", 
+      discovered: "1898", discoverer: "William Ramsay", 
+      electron_config: "[He] 2s² 2p⁶", phase: "气体", density: "0.0008999 g/cm³", 
+      melt: "-248.59°C", boil: "-246.05°C", 
+      description: "霓虹灯的主要气体，发出橙红色光。" },
+
+    // 第3周期（11-18）
+    { number: 11, symbol: "Na", name: "钠", mass: 22.990, category: "alkali-metal", 
+      discovered: "1807", discoverer: "Humphry Davy", 
+      electron_config: "[Ne] 3s¹", phase: "固体", density: "0.968 g/cm³", 
+      melt: "97.72°C", boil: "883°C", 
+      description: "重要的电解质，用于照明和化工。" },
+    
+    { number: 12, symbol: "Mg", name: "镁", mass: 24.305, category: "alkaline-earth", 
+      discovered: "1755", discoverer: "Joseph Black", 
+      electron_config: "[Ne] 3s²", phase: "固体", density: "1.738 g/cm³", 
+      melt: "650°C", boil: "1090°C", 
+      description: "轻质金属，用于合金和植物叶绿素。" },
+    
+    { number: 13, symbol: "Al", name: "铝", mass: 26.982, category: "post-transition", 
+      discovered: "1825", discoverer: "Hans Christian Ørsted", 
+      electron_config: "[Ne] 3s² 3p¹", phase: "固体", density: "2.70 g/cm³", 
+      melt: "660.32°C", boil: "2519°C", 
+      description: "地壳中含量最丰富的金属，用途广泛。" },
+    
+    { number: 14, symbol: "Si", name: "硅", mass: 28.085, category: "metalloid", 
+      discovered: "1824", discoverer: "Jöns Jacob Berzelius", 
+      electron_config: "[Ne] 3s² 3p²", phase: "固体", density: "2.3290 g/cm³", 
+      melt: "1414°C", boil: "3265°C", 
+      description: "半导体材料，沙子和玻璃的主要成分。" },
+    
+    { number: 15, symbol: "P", name: "磷", mass: 30.974, category: "nonmetal", 
+      discovered: "1669", discoverer: "Hennig Brand", 
+      electron_config: "[Ne] 3s² 3p³", phase: "固体", density: "1.823 g/cm³", 
+      melt: "44.15°C", boil: "280.5°C", 
+      description: "存在于DNA和骨骼中，用于肥料和火柴。" },
+    
+    { number: 16, symbol: "S", name: "硫", mass: 32.06, category: "nonmetal", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Ne] 3s² 3p⁴", phase: "固体", density: "2.067 g/cm³", 
+      melt: "115.21°C", boil: "444.61°C", 
+      description: "黄色固体，用于硫酸生产和橡胶硫化。" },
+    
+    { number: 17, symbol: "Cl", name: "氯", mass: 35.45, category: "halogen", 
+      discovered: "1774", discoverer: "Carl Wilhelm Scheele", 
+      electron_config: "[Ne] 3s² 3p⁵", phase: "气体", density: "0.003214 g/cm³", 
+      melt: "-101.5°C", boil: "-34.04°C", 
+      description: "黄绿色有毒气体，用于水消毒和PVC生产。" },
+    
+    { number: 18, symbol: "Ar", name: "氩", mass: 39.948, category: "noble-gas", 
+      discovered: "1894", discoverer: "Lord Rayleigh", 
+      electron_config: "[Ne] 3s² 3p⁶", phase: "气体", density: "0.0017837 g/cm³", 
+      melt: "-189.34°C", boil: "-185.85°C", 
+      description: "惰性气体，用于焊接保护和照明。" },
+
+    // 第4周期（19-36）
+    { number: 19, symbol: "K", name: "钾", mass: 39.098, category: "alkali-metal", 
+      discovered: "1807", discoverer: "Humphry Davy", 
+      electron_config: "[Ar] 4s¹", phase: "固体", density: "0.862 g/cm³", 
+      melt: "63.38°C", boil: "759°C", 
+      description: "必需矿物质，对神经传导至关重要。" },
+    
+    { number: 20, symbol: "Ca", name: "钙", mass: 40.078, category: "alkaline-earth", 
+      discovered: "1808", discoverer: "Humphry Davy", 
+      electron_config: "[Ar] 4s²", phase: "固体", density: "1.54 g/cm³", 
+      melt: "842°C", boil: "1484°C", 
+      description: "骨骼和牙齿的主要成分，参与肌肉收缩。" },
+    
+    { number: 21, symbol: "Sc", name: "钪", mass: 44.956, category: "transition-metal", 
+      discovered: "1879", discoverer: "Lars Fredrik Nilson", 
+      electron_config: "[Ar] 3d¹ 4s²", phase: "固体", density: "2.985 g/cm³", 
+      melt: "1541°C", boil: "2836°C", 
+      description: "稀土金属，用于高强度合金和照明。" },
+    
+    { number: 22, symbol: "Ti", name: "钛", mass: 47.867, category: "transition-metal", 
+      discovered: "1791", discoverer: "William Gregor", 
+      electron_config: "[Ar] 3d² 4s²", phase: "固体", density: "4.506 g/cm³", 
+      melt: "1668°C", boil: "3287°C", 
+      description: "高强度轻金属，耐腐蚀性能优异。" },
+    
+    { number: 23, symbol: "V", name: "钒", mass: 50.942, category: "transition-metal", 
+      discovered: "1801", discoverer: "Andrés Manuel del Río", 
+      electron_config: "[Ar] 3d³ 4s²", phase: "固体", density: "6.0 g/cm³", 
+      melt: "1910°C", boil: "3407°C", 
+      description: "用于钢铁合金，提高强度和耐热性。" },
+    
+    { number: 24, symbol: "Cr", name: "铬", mass: 51.996, category: "transition-metal", 
+      discovered: "1797", discoverer: "Louis Nicolas Vauquelin", 
+      electron_config: "[Ar] 3d⁵ 4s¹", phase: "固体", density: "7.15 g/cm³", 
+      melt: "1907°C", boil: "2671°C", 
+      description: "不锈钢的关键成分，提供光泽和防锈能力。" },
+    
+    { number: 25, symbol: "Mn", name: "锰", mass: 54.938, category: "transition-metal", 
+      discovered: "1774", discoverer: "Johan Gottlieb Gahn", 
+      electron_config: "[Ar] 3d⁵ 4s²", phase: "固体", density: "7.21 g/cm³", 
+      melt: "1246°C", boil: "2061°C", 
+      description: "用于钢铁生产，也是人体必需微量元素。" },
+    
+    { number: 26, symbol: "Fe", name: "铁", mass: 55.845, category: "transition-metal", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Ar] 3d⁶ 4s²", phase: "固体", density: "7.874 g/cm³", 
+      melt: "1538°C", boil: "2861°C", 
+      description: "地核主要成分，工业革命的基础金属。" },
+    
+    { number: 27, symbol: "Co", name: "钴", mass: 58.933, category: "transition-metal", 
+      discovered: "1735", discoverer: "Georg Brandt", 
+      electron_config: "[Ar] 3d⁷ 4s²", phase: "固体", density: "8.86 g/cm³", 
+      melt: "1495°C", boil: "2927°C", 
+      description: "用于磁性合金和电池，维生素B12的组成元素。" },
+    
+    { number: 28, symbol: "Ni", name: "镍", mass: 58.693, category: "transition-metal", 
+      discovered: "1751", discoverer: "Axel Fredrik Cronstedt", 
+      electron_config: "[Ar] 3d⁸ 4s²", phase: "固体", density: "8.908 g/cm³", 
+      melt: "1455°C", boil: "2913°C", 
+      description: "耐腐蚀金属，用于电镀和不锈钢生产。" },
+    
+    { number: 29, symbol: "Cu", name: "铜", mass: 63.546, category: "transition-metal", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Ar] 3d¹⁰ 4s¹", phase: "固体", density: "8.96 g/cm³", 
+      melt: "1084.62°C", boil: "2562°C", 
+      description: "优良的导电体，人类最早使用的金属之一。" },
+    
+    { number: 30, symbol: "Zn", name: "锌", mass: 65.38, category: "transition-metal", 
+      discovered: "1746", discoverer: "Andreas Sigismund Marggraf", 
+      electron_config: "[Ar] 3d¹⁰ 4s²", phase: "固体", density: "7.134 g/cm³", 
+      melt: "419.53°C", boil: "907°C", 
+      description: "用于镀锌防锈，也是人体必需微量元素。" },
+    
+    { number: 31, symbol: "Ga", name: "镓", mass: 69.723, category: "post-transition", 
+      discovered: "1875", discoverer: "Paul-Émile Lecoq de Boisbaudran", 
+      electron_config: "[Ar] 3d¹⁰ 4s² 4p¹", phase: "固体", density: "5.907 g/cm³", 
+      melt: "29.76°C", boil: "2204°C", 
+      description: "在手中会熔化的金属，用于半导体材料。" },
+    
+    { number: 32, symbol: "Ge", name: "锗", mass: 72.630, category: "metalloid", 
+      discovered: "1886", discoverer: "Clemens Winkler", 
+      electron_config: "[Ar] 3d¹⁰ 4s² 4p²", phase: "固体", density: "5.323 g/cm³", 
+      melt: "938.25°C", boil: "2833°C", 
+      description: "早期晶体管材料，现在用于红外光学。" },
+    
+    { number: 33, symbol: "As", name: "砷", mass: 74.922, category: "metalloid", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Ar] 3d¹⁰ 4s² 4p³", phase: "固体", density: "5.727 g/cm³", 
+      melt: "817°C", boil: "614°C", 
+      description: "剧毒但微量用于半导体和杀虫剂。" },
+    
+    { number: 34, symbol: "Se", name: "硒", mass: 78.971, category: "nonmetal", 
+      discovered: "1817", discoverer: "Jöns Jacob Berzelius", 
+      electron_config: "[Ar] 3d¹⁰ 4s² 4p⁴", phase: "固体", density: "4.809 g/cm³", 
+      melt: "221°C", boil: "685°C", 
+      description: "光电材料，也是人体必需微量元素。" },
+    
+    { number: 35, symbol: "Br", name: "溴", mass: 79.904, category: "halogen", 
+      discovered: "1826", discoverer: "Antoine Jérôme Balard", 
+      electron_config: "[Ar] 3d¹⁰ 4s² 4p⁵", phase: "液体", density: "3.1028 g/cm³", 
+      melt: "-7.2°C", boil: "58.8°C", 
+      description: "唯一液态非金属，用于阻燃剂和医药。" },
+    
+    { number: 36, symbol: "Kr", name: "氪", mass: 83.798, category: "noble-gas", 
+      discovered: "1898", discoverer: "William Ramsay", 
+      electron_config: "[Ar] 3d¹⁰ 4s² 4p⁶", phase: "气体", density: "0.003733 g/cm³", 
+      melt: "-157.36°C", boil: "-153.22°C", 
+      description: "惰性气体，用于高效照明和激光。" },
+
+    // 第5周期（37-54）
+    { number: 37, symbol: "Rb", name: "铷", mass: 85.468, category: "alkali-metal", 
+      discovered: "1861", discoverer: "Robert Bunsen", 
+      electron_config: "[Kr] 5s¹", phase: "固体", density: "1.532 g/cm³", 
+      melt: "39.31°C", boil: "688°C", 
+      description: "活泼碱金属，用于原子钟和特殊玻璃。" },
+    
+    { number: 38, symbol: "Sr", name: "锶", mass: 87.62, category: "alkaline-earth", 
+      discovered: "1790", discoverer: "Adair Crawford", 
+      electron_config: "[Kr] 5s²", phase: "固体", density: "2.64 g/cm³", 
+      melt: "777°C", boil: "1382°C", 
+      description: "用于烟花制造红色火焰，也是骨骼成分。" },
+    
+    { number: 39, symbol: "Y", name: "钇", mass: 88.906, category: "transition-metal", 
+      discovered: "1794", discoverer: "Johan Gadolin", 
+      electron_config: "[Kr] 4d¹ 5s²", phase: "固体", density: "4.472 g/cm³", 
+      melt: "1526°C", boil: "3345°C", 
+      description: "稀土金属，用于激光材料和超导体。" },
+    
+    // 40-54号元素（完整数据）
+    { number: 40, symbol: "Zr", name: "锆", mass: 91.224, category: "transition-metal", 
+      discovered: "1789", discoverer: "Martin Heinrich Klaproth", 
+      electron_config: "[Kr] 4d² 5s²", phase: "固体", density: "6.506 g/cm³", 
+      melt: "1855°C", boil: "4409°C", 
+      description: "耐腐蚀金属，用于核反应堆包壳材料。" },
+    
+    { number: 41, symbol: "Nb", name: "铌", mass: 92.906, category: "transition-metal", 
+      discovered: "1801", discoverer: "Charles Hatchett", 
+      electron_config: "[Kr] 4d⁴ 5s¹", phase: "固体", density: "8.57 g/cm³", 
+      melt: "2477°C", boil: "4744°C", 
+      description: "超导材料重要成分，用于合金强化。" },
+    
+    { number: 42, symbol: "Mo", name: "钼", mass: 95.95, category: "transition-metal", 
+      discovered: "1781", discoverer: "Peter Jacob Hjelm", 
+      electron_config: "[Kr] 4d⁵ 5s¹", phase: "固体", density: "10.22 g/cm³", 
+      melt: "2623°C", boil: "4639°C", 
+      description: "高强度合金元素，植物必需微量元素。" },
+    
+    { number: 43, symbol: "Tc", name: "锝", mass: 98, category: "transition-metal", 
+      discovered: "1937", discoverer: "Carlo Perrier", 
+      electron_config: "[Kr] 4d⁵ 5s²", phase: "固体", density: "11 g/cm³", 
+      melt: "2157°C", boil: "4265°C", 
+      description: "第一个人工合成元素，用于医疗成像。" },
+    
+    { number: 44, symbol: "Ru", name: "钌", mass: 101.07, category: "transition-metal", 
+      discovered: "1844", discoverer: "Karl Ernst Claus", 
+      electron_config: "[Kr] 4d⁷ 5s¹", phase: "固体", density: "12.45 g/cm³", 
+      melt: "2334°C", boil: "4150°C", 
+      description: "铂族金属，用于电子接触器和催化剂。" },
+    
+    { number: 45, symbol: "Rh", name: "铑", mass: 102.91, category: "transition-metal", 
+      discovered: "1803", discoverer: "William Hyde Wollaston", 
+      electron_config: "[Kr] 4d⁸ 5s¹", phase: "固体", density: "12.41 g/cm³", 
+      melt: "1964°C", boil: "3695°C", 
+      description: "最昂贵的贵金属之一，用于汽车催化转换器。" },
+    
+    { number: 46, symbol: "Pd", name: "钯", mass: 106.42, category: "transition-metal", 
+      discovered: "1803", discoverer: "William Hyde Wollaston", 
+      electron_config: "[Kr] 4d¹⁰", phase: "固体", density: "12.02 g/cm³", 
+      melt: "1554.9°C", boil: "2963°C", 
+      description: "吸收氢气能力极强，广泛用于催化剂。" },
+    
+    { number: 47, symbol: "Ag", name: "银", mass: 107.87, category: "transition-metal", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Kr] 4d¹⁰ 5s¹", phase: "固体", density: "10.49 g/cm³", 
+      melt: "961.78°C", boil: "2162°C", 
+      description: "导电导热性能最佳，用于珠宝和电子工业。" },
+    
+    { number: 48, symbol: "Cd", name: "镉", mass: 112.41, category: "transition-metal", 
+      discovered: "1817", discoverer: "Friedrich Stromeyer", 
+      electron_config: "[Kr] 4d¹⁰ 5s²", phase: "固体", density: "8.65 g/cm³", 
+      melt: "321.07°C", boil: "767°C", 
+      description: "有毒金属，曾广泛用于电池和颜料。" },
+    
+    { number: 49, symbol: "In", name: "铟", mass: 114.82, category: "post-transition", 
+      discovered: "1863", discoverer: "Ferdinand Reich", 
+      electron_config: "[Kr] 4d¹⁰ 5s² 5p¹", phase: "固体", density: "7.31 g/cm³", 
+      melt: "156.60°C", boil: "2072°C", 
+      description: "软金属，用于液晶显示器和半导体。" },
+    
+    { number: 50, symbol: "Sn", name: "锡", mass: 118.71, category: "post-transition", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Kr] 4d¹⁰ 5s² 5p²", phase: "固体", density: "7.287 g/cm³", 
+      melt: "231.93°C", boil: "2602°C", 
+      description: "古代青铜器成分，现代用于焊料和罐头。" },
+    
+    { number: 51, symbol: "Sb", name: "锑", mass: 121.76, category: "metalloid", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Kr] 4d¹⁰ 5s² 5p³", phase: "固体", density: "6.685 g/cm³", 
+      melt: "630.63°C", boil: "1587°C", 
+      description: "用于阻燃剂和铅酸电池合金。" },
+    
+    { number: 52, symbol: "Te", name: "碲", mass: 127.60, category: "metalloid", 
+      discovered: "1782", discoverer: "Franz-Joseph Müller von Reichenstein", 
+      electron_config: "[Kr] 4d¹⁰ 5s² 5p⁴", phase: "固体", density: "6.232 g/cm³", 
+      melt: "449.51°C", boil: "988°C", 
+      description: "半导体材料，加入钢中改善机械加工性。" },
+    
+    { number: 53, symbol: "I", name: "碘", mass: 126.90, category: "halogen", 
+      discovered: "1811", discoverer: "Bernard Courtois", 
+      electron_config: "[Kr] 4d¹⁰ 5s² 5p⁵", phase: "固体", density: "4.933 g/cm³", 
+      melt: "113.7°C", boil: "184.3°C", 
+      description: "必需微量元素，用于消毒和甲状腺激素。" },
+    
+    { number: 54, symbol: "Xe", name: "氙", mass: 131.29, category: "noble-gas", 
+      discovered: "1898", discoverer: "William Ramsay", 
+      electron_config: "[Kr] 4d¹⁰ 5s² 5p⁶", phase: "气体", density: "0.005887 g/cm³", 
+      melt: "-111.75°C", boil: "-108.12°C", 
+      description: "用于特殊照明和医疗麻醉剂。" },
+
+    // 第6周期（55-86）
+    { number: 55, symbol: "Cs", name: "铯", mass: 132.91, category: "alkali-metal", 
+      discovered: "1860", discoverer: "Robert Bunsen", 
+      electron_config: "[Xe] 6s¹", phase: "固体", density: "1.93 g/cm³", 
+      melt: "28.44°C", boil: "671°C", 
+      description: "最活泼的金属，用于原子钟和光电器件。" },
+    
+    { number: 56, symbol: "Ba", name: "钡", mass: 137.33, category: "alkaline-earth", 
+      discovered: "1808", discoverer: "Humphry Davy", 
+      electron_config: "[Xe] 6s²", phase: "固体", density: "3.51 g/cm³", 
+      melt: "727°C", boil: "1897°C", 
+      description: "用于医学造影剂和烟花绿色火焰。" },
+    
+    // 镧系元素（57-71）
+    { number: 57, symbol: "La", name: "镧", mass: 138.91, category: "lanthanide", 
+      discovered: "1839", discoverer: "Carl Gustaf Mosander", 
+      electron_config: "[Xe] 5d¹ 6s²", phase: "固体", density: "6.162 g/cm³", 
+      melt: "920°C", boil: "3464°C", 
+      description: "第一个镧系元素，用于相机镜头和电池。" },
+    
+    { number: 58, symbol: "Ce", name: "铈", mass: 140.12, category: "lanthanide", 
+      discovered: "1803", discoverer: "Jöns Jacob Berzelius", 
+      electron_config: "[Xe] 4f¹ 5d¹ 6s²", phase: "固体", density: "6.770 g/cm³", 
+      melt: "795°C", boil: "3443°C", 
+      description: "最丰富的稀土元素，用于自清洁烤箱涂层。" },
+    
+    // 58-71号镧系元素（完整数据）
+    { number: 59, symbol: "Pr", name: "镨", mass: 140.91, category: "lanthanide", 
+      discovered: "1885", discoverer: "Carl Auer von Welsbach", 
+      electron_config: "[Xe] 4f³ 6s²", phase: "固体", density: "6.77 g/cm³", 
+      melt: "935°C", boil: "3520°C", 
+      description: "用于高强度永磁体和有色玻璃。" },
+    
+    { number: 60, symbol: "Nd", name: "钕", mass: 144.24, category: "lanthanide", 
+      discovered: "1885", discoverer: "Carl Auer von Welsbach", 
+      electron_config: "[Xe] 4f⁴ 6s²", phase: "固体", density: "7.01 g/cm³", 
+      melt: "1024°C", boil: "3074°C", 
+      description: "最强永磁体材料，也用于激光器。" },
+    
+    { number: 61, symbol: "Pm", name: "钷", mass: 145, category: "lanthanide", 
+      discovered: "1945", discoverer: "Jacob A. Marinsky", 
+      electron_config: "[Xe] 4f⁵ 6s²", phase: "固体", density: "7.26 g/cm³", 
+      melt: "1042°C", boil: "3000°C", 
+      description: "人造放射性元素，用于核电池和厚度计。" },
+    
+    { number: 62, symbol: "Sm", name: "钐", mass: 150.36, category: "lanthanide", 
+      discovered: "1879", discoverer: "Paul-Émile Lecoq de Boisbaudran", 
+      electron_config: "[Xe] 4f⁶ 6s²", phase: "固体", density: "7.52 g/cm³", 
+      melt: "1072°C", boil: "1794°C", 
+      description: "用于核反应控制棒和永磁材料。" },
+    
+    { number: 63, symbol: "Eu", name: "铕", mass: 151.96, category: "lanthanide", 
+      discovered: "1901", discoverer: "Eugène-Anatole Demarçay", 
+      electron_config: "[Xe] 4f⁷ 6s²", phase: "固体", density: "5.244 g/cm³", 
+      melt: "822°C", boil: "1529°C", 
+      description: "荧光粉关键成分，用于纸币防伪标记。" },
+    
+    { number: 64, symbol: "Gd", name: "钆", mass: 157.25, category: "lanthanide", 
+      discovered: "1880", discoverer: "Jean Charles Galissard de Marignac", 
+      electron_config: "[Xe] 4f⁷ 5d¹ 6s²", phase: "固体", density: "7.90 g/cm³", 
+      melt: "1312°C", boil: "3273°C", 
+      description: "磁致冷材料，MRI造影剂重要成分。" },
+    
+    { number: 65, symbol: "Tb", name: "铽", mass: 158.93, category: "lanthanide", 
+      discovered: "1843", discoverer: "Carl Gustaf Mosander", 
+      electron_config: "[Xe] 4f⁹ 6s²", phase: "固体", density: "8.23 g/cm³", 
+      melt: "1356°C", boil: "3230°C", 
+      description: "用于固态器件和绿色荧光粉。" },
+    
+    { number: 66, symbol: "Dy", name: "镝", mass: 162.50, category: "lanthanide", 
+      discovered: "1886", discoverer: "Paul-Émile Lecoq de Boisbaudran", 
+      electron_config: "[Xe] 4f¹⁰ 6s²", phase: "固体", density: "8.540 g/cm³", 
+      melt: "1407°C", boil: "2567°C", 
+      description: "用于激光材料和数据存储合金。" },
+    
+    { number: 67, symbol: "Ho", name: "钬", mass: 164.93, category: "lanthanide", 
+      discovered: "1878", discoverer: "Marc Delafontaine", 
+      electron_config: "[Xe] 4f¹¹ 6s²", phase: "固体", density: "8.79 g/cm³", 
+      melt: "1461°C", boil: "2720°C", 
+      description: "最强磁性元素之一，用于核控制棒。" },
+    
+    { number: 68, symbol: "Er", name: "铒", mass: 167.26, category: "lanthanide", 
+      discovered: "1843", discoverer: "Carl Gustaf Mosander", 
+      electron_config: "[Xe] 4f¹² 6s²", phase: "固体", density: "9.066 g/cm³", 
+      melt: "1529°C", boil: "2868°C", 
+      description: "用于光纤放大器和粉色玻璃着色。" },
+    
+    { number: 69, symbol: "Tm", name: "铥", mass: 168.93, category: "lanthanide", 
+      discovered: "1879", discoverer: "Per Teodor Cleve", 
+      electron_config: "[Xe] 4f¹³ 6s²", phase: "固体", density: "9.32 g/cm³", 
+      melt: "1545°C", boil: "1950°C", 
+      description: "最稀有的稀土元素，用于便携式X光机。" },
+    
+    { number: 70, symbol: "Yb", name: "镱", mass: 173.05, category: "lanthanide", 
+      discovered: "1878", discoverer: "Jean Charles Galissard de Marignac", 
+      electron_config: "[Xe] 4f¹⁴ 6s²", phase: "固体", density: "6.90 g/cm³", 
+      melt: "824°C", boil: "1196°C", 
+      description: "用于原子钟和应力测量仪器。" },
+    
+    { number: 71, symbol: "Lu", name: "镥", mass: 174.97, category: "lanthanide", 
+      discovered: "1907", discoverer: "Georges Urbain", 
+      electron_config: "[Xe] 4f¹⁴ 5d¹ 6s²", phase: "固体", density: "9.841 g/cm³", 
+      melt: "1652°C", boil: "3402°C", 
+      description: "最后一个镧系元素，用于石油裂解催化剂。" },
+
+    // 第6周期继续（72-86）
+    { number: 72, symbol: "Hf", name: "铪", mass: 178.49, category: "transition-metal", 
+      discovered: "1923", discoverer: "Dirk Coster", 
+      electron_config: "[Xe] 4f¹⁴ 5d² 6s²", phase: "固体", density: "13.31 g/cm³", 
+      melt: "2233°C", boil: "4603°C", 
+      description: "用于核反应堆控制棒和微处理器。" },
+    
+    { number: 73, symbol: "Ta", name: "钽", mass: 180.95, category: "transition-metal", 
+      discovered: "1802", discoverer: "Anders Gustaf Ekeberg", 
+      electron_config: "[Xe] 4f¹⁴ 5d³ 6s²", phase: "固体", density: "16.69 g/cm³", 
+      melt: "3017°C", boil: "5458°C", 
+      description: "高耐腐蚀金属，用于电子电容器和手术植入物。" },
+    
+    { number: 74, symbol: "W", name: "钨", mass: 183.84, category: "transition-metal", 
+      discovered: "1783", discoverer: "Juan José Elhuyar", 
+      electron_config: "[Xe] 4f¹⁴ 5d⁴ 6s²", phase: "固体", density: "19.25 g/cm³", 
+      melt: "3422°C", boil: "5555°C", 
+      description: "熔点最高的金属，用于灯丝和穿甲弹。" },
+    
+    { number: 75, symbol: "Re", name: "铼", mass: 186.21, category: "transition-metal", 
+      discovered: "1925", discoverer: "Walter Noddack", 
+      electron_config: "[Xe] 4f¹⁴ 5d⁵ 6s²", phase: "固体", density: "21.02 g/cm³", 
+      melt: "3186°C", boil: "5596°C", 
+      description: "最后发现的天然存在元素，用于高温合金。" },
+    
+    { number: 76, symbol: "Os", name: "锇", mass: 190.23, category: "transition-metal", 
+      discovered: "1803", discoverer: "Smithson Tennant", 
+      electron_config: "[Xe] 4f¹⁴ 5d⁶ 6s²", phase: "固体", density: "22.59 g/cm³", 
+      melt: "3033°C", boil: "5012°C", 
+      description: "密度最大的天然元素，用于钢笔尖和催化剂。" },
+    
+    { number: 77, symbol: "Ir", name: "铱", mass: 192.22, category: "transition-metal", 
+      discovered: "1803", discoverer: "Smithson Tennant", 
+      electron_config: "[Xe] 4f¹⁴ 5d⁷ 6s²", phase: "固体", density: "22.56 g/cm³", 
+      melt: "2446°C", boil: "4428°C", 
+      description: "最耐腐蚀金属，用于标准米原器和火花塞。" },
+    
+    { number: 78, symbol: "Pt", name: "铂", mass: 195.08, category: "transition-metal", 
+      discovered: "1735", discoverer: "Antonio de Ulloa", 
+      electron_config: "[Xe] 4f¹⁴ 5d⁹ 6s¹", phase: "固体", density: "21.45 g/cm³", 
+      melt: "1768.3°C", boil: "3825°C", 
+      description: "贵金属催化剂，用于珠宝和汽车尾气净化。" },
+    
+    { number: 79, symbol: "Au", name: "金", mass: 196.97, category: "transition-metal", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Xe] 4f¹⁴ 5d¹⁰ 6s¹", phase: "固体", density: "19.32 g/cm³", 
+      melt: "1064.18°C", boil: "2856°C", 
+      description: "最受欢迎的贵金属，用于货币、珠宝和电子工业。" },
+    
+    { number: 80, symbol: "Hg", name: "汞", mass: 200.59, category: "transition-metal", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Xe] 4f¹⁴ 5d¹⁰ 6s²", phase: "液体", density: "13.534 g/cm³", 
+      melt: "-38.83°C", boil: "356.73°C", 
+      description: "唯一液态金属，有毒，用于温度计和荧光灯。" },
+    
+    { number: 81, symbol: "Tl", name: "铊", mass: 204.38, category: "post-transition", 
+      discovered: "1861", discoverer: "William Crookes", 
+      electron_config: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹", phase: "固体", density: "11.85 g/cm³", 
+      melt: "304°C", boil: "1473°C", 
+      description: "剧毒金属，曾用作杀虫剂，现在用于红外光学。" },
+    
+    { number: 82, symbol: "Pb", name: "铅", mass: 207.2, category: "post-transition", 
+      discovered: "古代", discoverer: "未知", 
+      electron_config: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²", phase: "固体", density: "11.34 g/cm³", 
+      melt: "327.46°C", boil: "1749°C", 
+      description: "古代广泛使用的有毒金属，现在主要用于蓄电池。" },
+    
+    { number: 83, symbol: "Bi", name: "铋", mass: 208.98, category: "post-transition", 
+      discovered: "1753", discoverer: "Claude François Geoffroy", 
+      electron_config: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³", phase: "固体", density: "9.78 g/cm³", 
+      melt: "271.5°C", boil: "1564°C", 
+      description: "最重的稳定元素，用于医药和低熔点合金。" },
+    
+    { number: 84, symbol: "Po", name: "钋", mass: 209, category: "post-transition", 
+      discovered: "1898", discoverer: "Marie Curie", 
+      electron_config: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴", phase: "固体", density: "9.196 g/cm³", 
+      melt: "254°C", boil: "962°C", 
+      description: "居里夫人发现的放射性元素，极其剧毒。" },
+    
+    { number: 85, symbol: "At", name: "砹", mass: 210, category: "halogen", 
+      discovered: "1940", discoverer: "Dale R. Corson", 
+      electron_config: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵", phase: "固体", density: "7 g/cm³", 
+      melt: "302°C", boil: "337°C", 
+      description: "最稀有的天然元素，半衰期极短。" },
+    
+    { number: 86, symbol: "Rn", name: "氡", mass: 222, category: "noble-gas", 
+      discovered: "1900", discoverer: "Friedrich Ernst Dorn", 
+      electron_config: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶", phase: "气体", density: "0.00973 g/cm³", 
+      melt: "-71°C", boil: "-61.7°C", 
+      description: "放射性气体，室内空气污染源之一。" },
+
+    // 第7周期（87-118）
+    { number: 87, symbol: "Fr", name: "钫", mass: 223, category: "alkali-metal", 
+      discovered: "1939", discoverer: "Marguerite Perey", 
+      electron_config: "[Rn] 7s¹", phase: "固体", density: "1.87 g/cm³", 
+      melt: "27°C", boil: "677°C", 
+      description: "最不稳定的碱金属，半衰期仅22分钟。" },
+    
+    { number: 88, symbol: "Ra", name: "镭", mass: 226, category: "alkaline-earth", 
+      discovered: "1898", discoverer: "Marie Curie", 
+      electron_config: "[Rn] 7s²", phase: "固体", density: "5.5 g/cm³", 
+      melt: "700°C", boil: "1737°C", 
+      description: "居里夫人发现的放射性元素，曾用于夜光涂料。" },
+    
+    // 锕系元素（89-103）
+    { number: 89, symbol: "Ac", name: "锕", mass: 227, category: "actinide", 
+      discovered: "1899", discoverer: "André-Louis Debierne", 
+      electron_config: "[Rn] 6d¹ 7s²", phase: "固体", density: "10.07 g/cm³", 
+      melt: "1050°C", boil: "3200°C", 
+      description: "第一个锕系元素，自然界极微量存在。" },
+    
+    { number: 90, symbol: "Th", name: "钍", mass: 232.04, category: "actinide", 
+      discovered: "1828", discoverer: "Jöns Jacob Berzelius", 
+      electron_config: "[Rn] 6d² 7s²", phase: "固体", density: "11.72 g/cm³", 
+      melt: "1750°C", boil: "4788°C", 
+      description: "潜在的核燃料，比铀更丰富。" },
+    
+    { number: 91, symbol: "Pa", name: "镤", mass: 231.04, category: "actinide", 
+      discovered: "1913", discoverer: "Kasimir Fajans", 
+      electron_config: "[Rn] 5f² 6d¹ 7s²", phase: "固体", density: "15.37 g/cm³", 
+      melt: "1568°C", boil: "未知", 
+      description: "极稀有放射性元素，半衰期32760年。" },
+    
+    { number: 92, symbol: "U", name: "铀", mass: 238.03, category: "actinide", 
+      discovered: "1789", discoverer: "Martin Heinrich Klaproth", 
+      electron_config: "[Rn] 5f³ 6d¹ 7s²", phase: "固体", density: "19.1 g/cm³", 
+      melt: "1132.2°C", boil: "4131°C", 
+      description: "主要的核燃料，自然界存在的最重元素。" },
+    
+    { number: 93, symbol: "Np", name: "镎", mass: 237, category: "actinide", 
+      discovered: "1940", discoverer: "Edwin McMillan", 
+      electron_config: "[Rn] 5f⁴ 6d¹ 7s²", phase: "固体", density: "20.45 g/cm³", 
+      melt: "644°C", boil: "3902°C", 
+      description: "第一个人工合成的超铀元素。" },
+    
+    { number: 94, symbol: "Pu", name: "钚", mass: 244, category: "actinide", 
+      discovered: "1940", discoverer: "Glenn T. Seaborg", 
+      electron_config: "[Rn] 5f⁶ 7s²", phase: "固体", density: "19.816 g/cm³", 
+      melt: "639.4°C", boil: "3228°C", 
+      description: "重要的核武器材料，半衰期长达24000年。" },
+    
+    { number: 95, symbol: "Am", name: "镅", mass: 243, category: "actinide", 
+      discovered: "1944", discoverer: "Glenn T. Seaborg", 
+      electron_config: "[Rn] 5f⁷ 7s²", phase: "固体", density: "12 g/cm³", 
+      melt: "1176°C", boil: "2607°C", 
+      description: "用于烟雾探测器，半衰期432年。" },
+    
+    { number: 96, symbol: "Cm", name: "锔", mass: 247, category: "actinide", 
+      discovered: "1944", discoverer: "Glenn T. Seaborg", 
+      electron_config: "[Rn] 5f⁷ 6d¹ 7s²", phase: "固体", density: "13.51 g/cm³", 
+      melt: "1340°C", boil: "3110°C", 
+      description: "纪念居里夫妇而命名，α辐射源。" },
+    
+    { number: 97, symbol: "Bk", name: "锫", mass: 247, category: "actinide", 
+      discovered: "1949", discoverer: "Stanley G. Thompson", 
+      electron_config: "[Rn] 5f⁹ 7s²", phase: "固体", density: "14.78 g/cm³", 
+      melt: "986°C", boil: "未知", 
+      description: "纪念伯克利而命名，极微量用于科学研究。" },
+    
+    { number: 98, symbol: "Cf", name: "锎", mass: 251, category: "actinide", 
+      discovered: "1950", discoverer: "Stanley G. Thompson", 
+      electron_config: "[Rn] 5f¹⁰ 7s²", phase: "固体", density: "15.1 g/cm³", 
+      melt: "900°C", boil: "未知", 
+      description: "极强的中子源，用于癌症治疗和探矿。" },
+    
+    { number: 99, symbol: "Es", name: "锿", mass: 252, category: "actinide", 
+      discovered: "1952", discoverer: "Albert Ghiorso", 
+      electron_config: "[Rn] 5f¹¹ 7s²", phase: "固体", density: "8.84 g/cm³", 
+      melt: "860°C", boil: "未知", 
+      description: "纪念爱因斯坦而命名，仅用于基础研究。" },
+    
+    { number: 100, symbol: "Fm", name: "镄", mass: 257, category: "actinide", 
+      discovered: "1952", discoverer: "Albert Ghiorso", 
+      electron_config: "[Rn] 5f¹² 7s²", phase: "固体", density: "9.7 g/cm³", 
+      melt: "1527°C", boil: "未知", 
+      description: "纪念费米而命名，半衰期仅100.5天。" },
+    
+    { number: 101, symbol: "Md", name: "钔", mass: 258, category: "actinide", 
+      discovered: "1955", discoverer: "Albert Ghiorso", 
+      electron_config: "[Rn] 5f¹³ 7s²", phase: "固体", density: "10.3 g/cm³", 
+      melt: "827°C", boil: "未知", 
+      description: "纪念门捷列夫而命名，极不稳定元素。" },
+    
+    { number: 102, symbol: "No", name: "锘", mass: 259, category: "actinide", 
+      discovered: "1958", discoverer: "Albert Ghiorso", 
+      electron_config: "[Rn] 5f¹⁴ 7s²", phase: "固体", density: "9.9 g/cm³", 
+      melt: "827°C", boil: "未知", 
+      description: "纪念诺贝尔而命名，半衰期仅58分钟。" },
+    
+    { number: 103, symbol: "Lr", name: "铹", mass: 262, category: "actinide", 
+      discovered: "1961", discoverer: "Albert Ghiorso", 
+      electron_config: "[Rn] 5f¹⁴ 7s² 7p¹", phase: "固体", density: "15.6 g/cm³", 
+      melt: "1627°C", boil: "未知", 
+      description: "纪念劳伦斯而命名，最后一个锕系元素。" },
+
+    // 第7周期继续（104-118）
+    { number: 104, symbol: "Rf", name: "𬬻", mass: 267, category: "transition-metal", 
+      discovered: "1964", discoverer: "Georgy Flerov", 
+      electron_config: "[Rn] 5f¹⁴ 6d² 7s²", phase: "固体(预测)", density: "17 g/cm³(预测)", 
+      melt: "2100°C(预测)", boil: "5500°C(预测)", 
+      description: "纪念卢瑟福而命名，极不稳定超重元素。" },
+    
+    { number: 105, symbol: "Db", name: "𬭊", mass: 270, category: "transition-metal", 
+      discovered: "1967", discoverer: "Georgy Flerov", 
+      electron_config: "[Rn] 5f¹⁴ 6d³ 7s²", phase: "固体(预测)", density: "21.6 g/cm³(预测)", 
+      melt: "未知", boil: "未知", 
+      description: "纪念杜布纳研究所而命名，半衰期仅34秒。" },
+    
+    { number: 106, symbol: "Sg", name: "𬭳", mass: 271, category: "transition-metal", 
+      discovered: "1974", discoverer: "Albert Ghiorso", 
+      electron_config: "[Rn] 5f¹⁴ 6d⁴ 7s²", phase: "固体(预测)", density: "23-24 g/cm³(预测)", 
+      melt: "未知", boil: "未知", 
+      description: "纪念西博格而命名，半衰期仅2.4分钟。" },
+    
+    { number: 107, symbol: "Bh", name: "𬭛", mass: 270, category: "transition-metal", 
+      discovered: "1981", discoverer: "Peter Armbruster", 
+      electron_config: "[Rn] 5f¹⁴ 6d⁵ 7s²", phase: "固体(预测)", density: "26-27 g/cm³(预测)", 
+      melt: "未知", boil: "未知", 
+      description: "纪念尼尔斯·玻尔而命名，极不稳定元素。" },
+    
+    { number: 108, symbol: "Hs", name: "𬭶", mass: 270, category: "transition-metal", 
+      discovered: "1984", discoverer: "Peter Armbruster", 
+      electron_config: "[Rn] 5f¹⁴ 6d⁶ 7s²", phase: "固体(预测)", density: "27-29 g/cm³(预测)", 
+      melt: "未知", boil: "未知", 
+      description: "纪念德国黑森州而命名，半衰期仅10秒。" },
+    
+    { number: 109, symbol: "Mt", name: "鿏", mass: 278, category: "transition-metal", 
+      discovered: "1982", discoverer: "Peter Armbruster", 
+      electron_config: "[Rn] 5f¹⁴ 6d⁷ 7s²", phase: "固体(预测)", density: "27-28 g/cm³(预测)", 
+      melt: "未知", boil: "未知", 
+      description: "纪念莉泽·迈特纳而命名，半衰期仅8秒。" },
+    
+    { number: 110, symbol: "Ds", name: "𫟼", mass: 281, category: "transition-metal", 
+      discovered: "1994", discoverer: "Sigurd Hofmann", 
+      electron_config: "[Rn] 5f¹⁴ 6d⁹ 7s¹", phase: "固体(预测)", density: "26-27 g/cm³(预测)", 
+      melt: "未知", boil: "未知", 
+      description: "纪念德国达姆施塔特市而命名。" },
+    
+    { number: 111, symbol: "Rg", name: "𬬭", mass: 282, category: "transition-metal", 
+      discovered: "1994", discoverer: "Sigurd Hofmann", 
+      electron_config: "[Rn] 5f¹⁴ 6d¹⁰ 7s¹", phase: "固体(预测)", density: "22-24 g/cm³(预测)", 
+      melt: "未知", boil: "未知", 
+      description: "纪念威廉·伦琴而命名，极不稳定元素。" },
+    
+    { number: 112, symbol: "Cn", name: "鿔", mass: 285, category: "transition-metal", 
+      discovered: "1996", discoverer: "Sigurd Hofmann", 
+      electron_config: "[Rn] 5f¹⁴ 6d¹⁰ 7s²", phase: "气体(预测)", density: "14.0 g/cm³(预测)", 
+      melt: "未知", boil: "未知", 
+      description: "可能具有类汞性质，半衰期仅29秒。" },
+    
+    { number: 113, symbol: "Nh", name: "鿭", mass: 286, category: "post-transition", 
+      discovered: "2003", discoverer: "杜布纳联合核研究所", 
+      electron_config: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹", phase: "固体(预测)", density: "16 g/cm³(预测)", 
+      melt: "430°C(预测)", boil: "1130°C(预测)", 
+      description: "亚洲国家首次发现的元素，具有类铊性质。" },
+    
+    { number: 114, symbol: "Fl", name: "𫓧", mass: 289, category: "post-transition", 
+      discovered: "1998", discoverer: "杜布纳联合核研究所", 
+      electron_config: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²", phase: "液体(预测)", density: "14 g/cm³(预测)", 
+      melt: "70°C(预测)", boil: "150°C(预测)", 
+      description: "可能具有类铅性质，半衰期约2.6秒。" },
+    
+    { number: 115, symbol: "Mc", name: "镆", mass: 290, category: "post-transition", 
+      discovered: "2003", discoverer: "杜布纳联合核研究所", 
+      electron_config: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³", phase: "固体(预测)", density: "13.5 g/cm³(预测)", 
+      melt: "400°C(预测)", boil: "1100°C(预测)", 
+      description: "纪念莫斯科州而命名，半衰期仅0.65秒。" },
+    
+    { number: 116, symbol: "Lv", name: "𫟷", mass: 293, category: "post-transition", 
+      discovered: "2000", discoverer: "杜布纳联合核研究所", 
+      electron_config: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴", phase: "固体(预测)", density: "12.9 g/cm³(预测)", 
+      melt: "220°C(预测)", boil: "800°C(预测)", 
+      description: "纪念美国劳伦斯利弗莫尔国家实验室而命名。" },
+    
+    { number: 117, symbol: "Ts", name: "鿬", mass: 294, category: "halogen", 
+      discovered: "2010", discoverer: "杜布纳联合核研究所", 
+      electron_config: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵", phase: "固体(预测)", density: "7.1-7.3 g/cm³(预测)", 
+      melt: "350-550°C(预测)", boil: "610°C(预测)", 
+      description: "可能具有类砹性质，半衰期仅51毫秒。" },
+    
+    { number: 118, symbol: "Og", name: "鿫", mass: 294, category: "noble-gas", 
+      discovered: "2006", discoverer: "杜布纳联合核研究所", 
+      electron_config: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶", phase: "气体(预测)", density: "4.9-5.1 g/cm³(预测)", 
+      melt: "未知", boil: "未知", 
+      description: "目前已知最重元素，半衰期仅0.89毫秒。" }
+];
+        // 生成元素周期表
+        function generatePeriodicTable() {
+            const table = document.getElementById('periodicTable');
+            table.innerHTML = '';
+            
+            // 创建元素周期表的布局
+            const layout = [
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+                [3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 8, 9, 10],
+                [11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 14, 15, 16, 17, 18],
+                [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36],
+                [37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54],
+                [55, 56, 57, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86],
+                [87, 88, 89, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 0],
+                [0, 0, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 0]
+            ];
+            
+            layout.forEach(row => {
+                row.forEach(num => {
+                    const cell = document.createElement('div');
+                    
+                    if (num === 0) {
+                        cell.style.visibility = 'hidden';
+                    } else {
+                        const element = elements.find(el => el.number === num);
+                        
+                        if (element) {
+                            cell.className = `element ${element.category}`;
+                            cell.innerHTML = `
+                                <div class="number">${element.number}</div>
+                                <div class="symbol">${element.symbol}</div>
+                                <div class="name">${element.name}</div>
+                                <div class="mass">${element.mass}</div>
+                            `;
+                            
+                            cell.addEventListener('click', () => showElementDetails(element));
+                        } else {
+                            cell.className = 'element unknown';
+                            cell.innerHTML = `
+                                <div class="number">${num}</div>
+                                <div class="symbol">?</div>
+                                <div class="name">未知</div>
+                            `;
+                        }
+                    }
+                    
+                    table.appendChild(cell);
+                });
+            });
+        }
+
+        // 显示元素详情
+        function showElementDetails(element) {
+            const modal = document.getElementById('elementModal');
+            const detail = document.getElementById('elementDetail');
+            
+            detail.innerHTML = `
+                <div class="element-header">
+                    <div class="element-symbol-large" style="color: ${getCategoryColor(element.category)}">${element.symbol}</div>
+                    <div class="element-name-large">${element.name} (${element.symbol})</div>
+                </div>
+                <div class="element-properties">
+                    <table class="property-table">
+                        <tr>
+                            <th>属性</th>
+                            <th>值</th>
+                        </tr>
+                        <tr>
+                            <td>原子序数</td>
+                            <td>${element.number}</td>
+                        </tr>
+                        <tr>
+                            <td>原子量</td>
+                            <td>${element.mass}</td>
+                        </tr>
+                        <tr>
+                            <td>类别</td>
+                            <td>${getCategoryName(element.category)}</td>
+                        </tr>
+                        <tr>
+                            <td>电子排布</td>
+                            <td>${element.electron_config || '未知'}</td>
+                        </tr>
+                        <tr>
+                            <td>物态 (STP)</td>
+                            <td>${element.phase || '未知'}</td>
+                        </tr>
+                        <tr>
+                            <td>密度</td>
+                            <td>${element.density || '未知'}</td>
+                        </tr>
+                        <tr>
+                            <td>熔点</td>
+                            <td>${element.melt || '未知'}</td>
+                        </tr>
+                        <tr>
+                            <td>沸点</td>
+                            <td>${element.boil || '未知'}</td>
+                        </tr>
+                        <tr>
+                            <td>发现年份</td>
+                            <td>${element.discovered || '未知'}</td>
+                        </tr>
+                        <tr>
+                            <td>发现者</td>
+                            <td>${element.discoverer || '未知'}</td>
+                        </tr>
+                    </table>
+                    <div class="element-description">
+                        <h3>描述</h3>
+                        <p>${element.description || '暂无详细描述。'}</p>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        // 获取类别名称
+        function getCategoryName(category) {
+            const names = {
+                'alkali-metal': '碱金属',
+                'alkaline-earth': '碱土金属',
+                'transition-metal': '过渡金属',
+                'post-transition': '后过渡金属',
+                'metalloid': '类金属',
+                'nonmetal': '非金属',
+                'halogen': '卤素',
+                'noble-gas': '稀有气体',
+                'lanthanide': '镧系元素',
+                'actinide': '锕系元素',
+                'unknown': '未知'
+            };
+            return names[category] || category;
+        }
+
+        // 获取类别颜色
+        function getCategoryColor(category) {
+            const colors = {
+                'alkali-metal': 'var(--alkali-metal)',
+                'alkaline-earth': 'var(--alkaline-earth)',
+                'transition-metal': 'var(--transition-metal)',
+                'post-transition': 'var(--post-transition)',
+                'metalloid': 'var(--metalloid)',
+                'nonmetal': 'var(--nonmetal)',
+                'halogen': 'var(--halogen)',
+                'noble-gas': 'var(--noble-gas)',
+                'lanthanide': 'var(--lanthanide)',
+                'actinide': 'var(--actinide)',
+                'unknown': 'var(--unknown)'
+            };
+            return colors[category] || '#999';
+        }
+
+        // 搜索功能
+        document.getElementById('search').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const elements = document.querySelectorAll('.element');
+            
+            // 移除之前的高亮
+            elements.forEach(el => el.classList.remove('highlight'));
+            
+            if (searchTerm.length < 1) return;
+            
+            elements.forEach(el => {
+                const number = el.querySelector('.number')?.textContent || '';
+                const symbol = el.querySelector('.symbol')?.textContent || '';
+                const name = el.querySelector('.name')?.textContent || '';
+                
+                if (number.includes(searchTerm) || 
+                    symbol.toLowerCase().includes(searchTerm) || 
+                    name.toLowerCase().includes(searchTerm)) {
+                    el.classList.add('highlight');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        });
+
+        // 关闭模态框
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('elementModal').style.display = 'none';
+        });
+
+        // 点击模态框外部关闭
+        window.addEventListener('click', function(event) {
+            if (event.target === document.getElementById('elementModal')) {
+                document.getElementById('elementModal').style.display = 'none';
+            }
+        });
+
+        // 初始化
+        window.onload = function() {
+            generatePeriodicTable();
+        };
+    </script>
+</body>
+</html>
